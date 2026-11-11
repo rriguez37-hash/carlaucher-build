@@ -1,0 +1,45 @@
+name: Build CarLauncher APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Descomprimir el proyecto en la raíz
+        run: |
+          # Extrae el ZIP directamente en el directorio actual
+          unzip -q -o CarLauncher.zip
+          # Si por alguna razón el ZIP creó una subcarpeta, movemos todo a la raíz
+          if [ -d "CarLauncher" ]; then
+            mv CarLauncher/* .
+            mv CarLauncher/.* . 2>/dev/null || true
+            rmdir CarLauncher
+          fi
+
+      - name: Dar permisos de ejecución a Gradle
+        run: chmod +x gradlew
+
+      - name: Compilar APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CarLauncher-APK-Android11
+          path: app/build/outputs/apk/debug/*.apk
