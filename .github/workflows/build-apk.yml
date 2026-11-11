@@ -1,0 +1,40 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Descomprimir el proyecto desde el ZIP
+        run: |
+          # Reemplaza 'CarLauncher.zip' si tu archivo se llama diferente
+          unzip -q CarLauncher.zip -d ./proyecto
+
+      - name: Configurar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Dar permisos de ejecución a Gradle
+        # La ruta './proyecto' debe coincidir con la carpeta donde se descomprimió
+        run: chmod +x ./proyecto/gradlew
+
+      - name: Compilar el APK (Debug)
+        run: |
+          cd ./proyecto
+          ./gradlew assembleDebug
+
+      - name: Subir el APK como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: CarLauncher-APK
+          # Ajusta esta ruta si tu APK se genera en otra carpeta dentro del proyecto
+          path: proyecto/app/build/outputs/apk/debug/*.apk
